@@ -6,7 +6,7 @@ An Overview of Query Optimization in Relational Systems
 
 3. AN EXAMPLE: SYSTEM-R OPTIMIZER
 &&&
-例子：SYSTEM-R的优化器
+3. 例子：SYSTEM-R的优化器
 &&&
 The System-R project significantly advanced the state of query
 optimization of relational systems. The ideas in [55] have been
@@ -151,6 +151,9 @@ strongly influenced subsequent developments in optimization.
 &&&
 
 4. SEARCH SPACE
+&&&
+4. 搜索空间
+&&&
 As mentioned in Section 2, the search space for optimization
 depends on the set of algebraic transformations that preserve
 equivalence and the set of physical operators supported in an
@@ -159,6 +162,9 @@ important algebraic transformations that have been discovered. It
 should be noted that transformations do not necessarily reduce
 cost and therefore must be applied in a cost-based manner by the
 enumeration algorithm to ensure a positive benefit.
+&&&
+在第二节中提到，优化中的搜索中间依赖于一组转换定律保证了一组优化器支持的运算符在语义上的一致。在这一届，我会讨论一些很重要的已经被发现的转换定律。需要注意的是这些转换定律不一定会降低消耗因此必须要用基于耗费的遍历算法来保证它们是有用的。
+&&&
 The optimizer may use several representations of a query during
 the lifecycle of optimizing a query. The initial representation is
 often the parse tree of the query and the final representation is an
@@ -167,6 +173,9 @@ that of logical operator trees (also called query trees) that captures
 an algebraic expression. Figure 2 is an example of a query tree.
 Often, nodes of the query trees are annotated with additional
 information.
+&&&
+优化器可能会在一个查询的不同优化的生命周期使用不同的表示。一开始的表示一般是查询的解析树还有最后的表示是有一个运算符树。一种描述数学表达式的逻辑运算符树（也叫做查询树）的中间表示同样会被用到。Fig2就是一个查询树的例子。一般查询书的结点还会被标记额外的信息。
+&&&
 
 Some systems also use a “calculus-oriented” representation for
 analyzing the structure of the query. For SPJ queries, such a
@@ -189,6 +198,9 @@ subgraphs that represent predicates (and quantifiers) across query
 blocks. In contrast, Exodus [22] and its derivatives, uniformly use
 query trees and operator trees for all phases of optimization.
 ![fig3](./1fig3.jpg)
+&&&
+有些系统同时使用了一种“面向计算”的表示来分析查询的结构。对于SPJ查询，这样的结构一般会被表示成一个查询图，其中结点表示关系（关联变量）还有带标签的边来表示对于关系的连接断言（见Fig3）。尽管概念上很简单，这样的表示在一些方面会不能表达任意的SQL语句。首先，断言图只能表达一组连接断言而不能表达其他操作符，例如并操作。然后，不像自然连接，操作符例如外连接是费堆成的然后也对执行顺序敏感。最后，这样的表示不能表达含有子查询块的SSQL语句。在用于Starburst系统的QGM结构，构建块是一个改良的查询图，并且能够表示一个简单的没有子查询的查询语句。多块的查询是以一组子图加上用于子图的表来表示对于多个查询块的断言。比较起来，Exodus还有它的变体对所有阶段的优化统一地使用了查询书还有运算符树
+&&&
 
 4.1 Commuting Between Operators
 A large and important class of transformations exploits
