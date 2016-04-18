@@ -283,7 +283,9 @@ Join(R, S LOJ T) = Join (R,S) LOJ T
 &&&
 
 4.1.3 Group-By and Join
-![fig4](./1fig4.jpg)
+&&&
+4.1.3 Group-By and 连接
+&&&
 In traditional execution of a SPJ query with group-by, the
 evaluation of the SPJ component of the query precedes the groupby.
 The set of transformations described in this section enable the
@@ -300,6 +302,10 @@ dual of such transformations corresponds to the case where a
 group-by operator may be pulled up past a join. These
 transformations are described in [5,60,25,6] (see [4] for an
 overview).
+&&&
+在传统的带有group-by的SPJ查询的执行中，SPJ组件中的求值会先于groupby。这节描述的变换能让group by操作先于连接操作。这些变换同样适用于SELECT DISTICT因为后者是一种group-by的特殊情况。group-by操作符可以潜在地大幅度降低元组的数量，因为每个元组的分区最后最会生成一个元组。因此，在一些场景中，首先做group-by，连接的耗费可以减少很多。然而，在有合适的索引的心情宽广下，一个group-by操作也可以耗费很低。一双对应这样情况的转换可能会放在连接前。这些变换在[5,60,25,6]有阐述，（见[4]的概览）。
+&&&
+![fig4](./1fig4.jpg)
 In this section, we briefly discuss specific instances where the
 transformation to do an early group-by prior to the join may be
 applicable. Consider the query tree in Figure 4(a). Let the join
@@ -307,6 +313,9 @@ between R1 and R2 be a foreign key join and let the aggregated
 columns of G be from columns in R1 and the set of group-by
 columns be a superset of the foreign key columns of R1. For such
 a query, let us consider the corresponding operator tree in Fig.
+&&&
+在这一节，我们会间断地讨论几个特定的group-by可以先于连接座的具体例子。考虑Fig4(a)中的查询树。嘉定R1和R2之间的连接是基于外键的，然后聚合的属性是来自R1的，还有group-by的属性是R1外键属性的超集。对于这样的查询，让我们考虑对应Fig4(b)中的操作符树，其中G1=G。
+&&&
 4(b), where G1=G. In that tree, the final join with R2 can only
 eliminate a set of potential partitions of R1 created by G1 but will
 not affect the partitions nor the aggregates computed for the
@@ -314,6 +323,9 @@ partitions by G1 since every tuple in R1 will join with at most one
 tuple in R2. Therefore, we can push down the group-by, as shown
 in Fig. 4(b) and preserve equivalence for arbitrary side-effect free
 aggregate functions. Fig. 4(c) illustrates an example where the
+&&&
+在这棵树中，最后跟R2的连接可以减少位R1的潜在分区数，这组分区由G1创建但不会影响到分袂和聚合计划，因为对于所有的R1中的元组，最多只会和R2中元组连接一次。因此，我们可以把group-by下一，就如Fig4(b)一样。这对于所有没有副作用的聚合函数可以保证语义一直。
+&&&
 transformation introduces a group-by and represents a class of
 useful examples where the group-by operation is done in stages.
 For example, assume that in Fig. 4(a), where all the columns on
@@ -323,6 +335,9 @@ on the projection columns of the R1 node and computes the
 aggregated values on those partitions. However, the true partitions
 in Fig 4(a) may need to combine multiple partitions introduced by
 G1 into a single partition (many to one mapping). The group-by
+&&&
+Fig4(c)阐述了一个变换过程引入多一个group-by的例子，代表了一类很有用的把group-by操作分成做个阶段做的情况。例如，假设在Fig4(a)中，所有聚合函数用到的属性都来自于R1。在这种情况中，新增的group-by操作符G1以R1投影的属性来做分区，然后计算这些分区的聚合值。然而，Fig4(a)中真正的分区可能需要结合G1引入的多个分区成为一个分区（多到一映射）。
+&&&
 operator G ensures the above. Such staged computation may still
 be useful in reducing the cost of the join because of the data
 reduction effect of G1. Such staged aggregation requires the
@@ -333,6 +348,9 @@ can use the transformation in Fig. 4(c) to do an early aggregation
 and obtain the total sales for each product. We then need a
 subsequent group-by that sums over all products that belong to
 each division.
+&&&
+G这个group-by操作符保证了这一点。这样的一步计算对于降低连接的耗费可能仍然非常有效，因为G1减少了数据的量。这个阶段的聚合要求聚合函数满足Agg(S U S’)可以由Agg(S)和Agg(S’)计算得到的特性。例如在一次除法中为了计算所有销售额的总量，我们可以使用Fig4(c)中的变换来做早起的聚合来获取每个产品的销售额。我们然后需要进一步的group-by来求和所有对于每个除法的总额。
+&&&
 
 4.2 Reducing Multi-Block Queries to Single-
 Block
