@@ -1,6 +1,13 @@
 An Overview of Query Optimization in Relational Systems
 
+&&&
+关系型数据库查询优化概览
+&&&
+
 3. AN EXAMPLE: SYSTEM-R OPTIMIZER
+&&&
+例子：SYSTEM-R的优化器
+&&&
 The System-R project significantly advanced the state of query
 optimization of relational systems. The ideas in [55] have been
 incorporated in many commercial optimizers continue to be
@@ -18,18 +25,31 @@ can use either the nested loop or sort-merge implementation. Each
 scan node can use either index scan (using a clustered or nonclustered
 index) or sequential scan. Finally, predicates are
 evaluated as early as possible.
+![fig2](./1fig2.jpg)
+&&&
+System-R极大地推动了关系型数据库查询优化的研究。[55]中的的想法已经被用于很多商业的优化器。我这里会展示SPJ查询中的一部分重要的思想。SPJ与被数据库理论广泛研究的关联查询有很大的关系并且很好地总结了它。使用SPJ来说，System-R优化器中的的搜索空间由一些对应于一个连接序列的操作符树组成。例如，序列Join(Join(Join(A,B),C),D)可以用Fig2来表述。因为连接操作的结合性和交换性，这样的序列逻辑上与树相同。一个连接操作符可以用一个双层循环或者合并排序来实现。每个扫描结点可以使用索引扫描（使用聚合索引或非聚合索引）或者是顺序扫描。最后，断言被尽早地求值。
+&&&
 The cost model assigns an estimated cost to any partial or
 complete plan in the search space. It also determines the estimated
 size of the data stream for output of every operator in the plan. It
 relies on:
+&&&
+耗费模型给出了搜索空间中部分或者整个执行计划的一个估算耗费。它同时决定了在执行计划中每个操作符的数据流的估算大小。它依赖于：
+&&&
 (a) A set of statistics maintained on relations and indexes, e.g.,
 number of data pages in a relation, number of pages in an
 index, number of distinct values in a column
+&&&
+(a)一组对于关系和索引的统计数据。例如关系中的数据页的数量，索引用到的数据页的数量，一列中不同的值的数量。
+&&&
 (b) Formulas to estimate selectivity of predicates and to project
 the size of the output data stream for every operator node.
 For example, the size of the output of a join is estimated by
 taking the product of the sizes of the two relations and then
 applying the joint selectivity of all applicable predicates.
+&&&
+(b)用于估计每个操作结点筛选率的断言和数据流投影大小的公式。例如，连接操作的输出规模是这样估计的，把两个做连接操作的关系的大小乘起来然后算上所有用到的断言的筛选率。
+&&&
 (c) Formulas to estimate the CPU and I/O costs of query
 execution for every operator. These formulas take into
 account the statistical properties of its input data streams,
@@ -38,6 +58,9 @@ available order on the data stream (e.g., if a data stream is
 ordered, then the cost of a sort-merge join on that stream may
 be significantly reduced). In addition, it is also checked if the
 output data stream will have any order.
+&&&
+(c)用于估计查询操作中每个操作符的CPU和IO耗费的公式。这些公式把输入流的统计特性、所有可用的的数据获取方法，还有数据流任何可用的顺序纳入估算中（例如，如果一个数据流是有序的，那么对这个数据流做归并排序的耗费就可以减少很多）。此外，输出流也会被检查是否具有有序性。
+&&&
 The cost model uses (a)-(c) to compute and associate the
 following information in a bottom-up fashion for operators in a
 plan: (1) The size of the data stream represented by the output of
@@ -45,11 +68,15 @@ the operator node. (2) Any ordering of tuples created or sustained
 by the output data stream of the operator node. (3) Estimated
 execution cost for the operator (and the cumulative cost of the
 partial plan so far).
-![fig2](./1fig2.jpg)
-
+&&&
+耗费模型使用了(a)-(c)以一种自底向上方法来计算执行计划中的操作符和结合下面列到的信息。(1)体现数据流大小的操作符输出数据流规模。(2)任何由一个操作符结点创建或者保持的输出元组有序性。(3)操作符的估算耗费（包括到这个到操作符位置累计的所有部分执行计划的耗费）。
+&&&
 The enumeration algorithm for System-R optimizer demonstrates
 two important techniques: use of dynamic programming and use
 of interesting orders.
+&&&
+System-R查询优化器中的遍历算法说明了两个重要的技术：动态规划的使用和期望的顺序。
+&&&
 The essence of the dynamic programming approach is based on
 the assumption that the cost model satisfies the principle of
 optimality. Specifically, it assumes that in order to obtain an
@@ -74,7 +101,9 @@ Join({R2,R3,R4}, R1). The rest of the plans for
 {R1,R2,R3,R4} may be discarded. The dynamic programming
 approach is significantly faster than the naïve approach since
 instead of O(n!) plans, only O(n2n -1) plans need to be enumerated.
-
+&&&
+使用动态规划的本质是基于耗费模型符合优化性质的假设。更确切地说，它假设为了获取SPJ的一个最有的执行计划，这样一个执行计划Q由k个连接符组成，它可以先知考虑所有Q的只有k-1个连接符的子表达式，然后在此基础上扩展多一个连接符。换句话来说，Q子表达式（或者说子查询）的只有k-1个连接符的最优子计划对于Q的整体最优解来说就不用继续考虑。由此，基于动态规划的遍历视一个SPJ查询Q为一组将要被连接的关系{R1,..Rn}。遍历算法自底向上运行。在第j步结束的时候，算法计算除了所有规模为j的子查询的最优解。为了得到涵盖了j+1关系的子查询的最优解，我们考虑所有利用在j步计算出来的子最优解能够组合构造出来的情况。例如对于{R1,R2,R3,R4}的最优解，是在(1)Join({R1,R2,R3},R4) (2)Join({R1,R2,R4},R3) (3) Join ({R1,R3,R4},R2) (4)Join({R2,R3,R4}, R1)中挑选。其余的对于{R1,R2,R3,R4}的执行计划都会被删掉。动态规划比最基础的方法要高效很多，因为遍历的复杂度由O(n!)变成了O(n2n -1)。
+&&&
 The second important aspect of System R optimizer is the
 consideration of interesting orders. Let us now consider a query
 that represents the join among {R1,R2,R3} with the predicates
@@ -86,6 +115,9 @@ plan where R1 and R2 are joined using sort-merge. However, note
 that if sort-merge is used to join R1 and R2, the result of the join is
 sorted on a. The sorted order may significantly reduce the cost of
 the join with R3. Thus, pruning the plan that represents the sortmerge
+&&&
+System R优化器第二个重要的方面是期望顺序的考虑。让我们现在考虑这样的查询，{R1,R2,R3}做连接操作然后断言R1.a = R2.a = R3.a。让我们再假设子查询{R1,R2}的耗费对于使用内层循环是归并排序的复杂度分别是x和y，并且x<y。在这种情况，在考虑{R1, R2, R3}整个查询计划的时候，我们不会考虑对R1和R2做归并操作。然而，注意如果R1和R2座归并操作，连接之后的记过就是以字段a来排好序的。这个有序性可能会显著减低跟R3连接操作的耗费。因此，修剪掉表示归并排序的执行计划会导致R1和R2对于全局最优来说的子最优。
+&&&
 join between R1 and R2 can result in sub-optimality of the
 global plan. The problem arises because the result of the sortmerge
 join between R1 and R2 has an ordering of tuples in the
@@ -96,6 +128,9 @@ consequential to execution plans for the query (hence the name
 interesting orders). Furthermore, in the System R optimizer, two
 plans are compared only if they represent the same expression as
 well as have the same interesting order. The idea of interesting
+&&&
+问题出现时因为对R1和R2做归并连接的结果顺序在接下来的连接操作中会非常有用。然而，内存循环实现的连接就没有这样的有序性。System R会查出可能会被执行计划用到的有序性（因此是期望顺序这个名字）。此外，在System R优化器中，当两个执行计划同时表示相同表达式和期望顺序时才会被比较。
+&&&
 order was later generalized to physical properties in [22] and is
 used extensively in modern optimizers. Intuitively, a physical
 property is any characteristic of a plan that is not shared by all
@@ -111,6 +146,9 @@ space. This led to the development of more extensible
 optimization architectures. However, the use of cost-based
 optimization, dynamic programming and interesting orders
 strongly influenced subsequent developments in optimization.
+&&&
+期望顺序的思想后面在[22]中被一般化为一个物理属性并被现代优化器广泛使用。直觉上来说，一个物理属性是任何一个计划跟其它具有同等逻辑表达式的特性，并且这个特性会影响到接下来的操作耗费的。最后，注意System R提供了一种简单的机制来把违反最有型原理纳入考虑，不只是用于物理属性。除了System R方法的优雅性，这个框架不能很容易地扩折来跟其它扩展了搜索空间的逻辑变换（在连接有序以外）集成在一起。这导致了更可扩展的优化架构的开发。然而，基于耗费的优化、动态规划和期望顺序都极强地影响了接下来优化工作的发展。
+&&&
 
 4. SEARCH SPACE
 As mentioned in Section 2, the search space for optimization

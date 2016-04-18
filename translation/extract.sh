@@ -13,5 +13,7 @@ if [ "$LANG" = 'c' ]; then
     awk 'BEGIN{chinese=0} /^&&&*/{chinese=1-chinese;next;} {if(chinese){print}}' $FILENAME
 elif [ "$LANG" = 'e' ]; then
     awk 'BEGIN{chinese=0} /^&&&*/{chinese=1-chinese;next;} {if(!chinese){print}}' $FILENAME
+else
+    echo 'invalid state'
 fi
 
