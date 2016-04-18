@@ -203,15 +203,27 @@ query trees and operator trees for all phases of optimization.
 &&&
 
 4.1 Commuting Between Operators
+&&&
+4.1 运算符的交换
+&&&
 A large and important class of transformations exploits
 commutativity among operators. In this section, we see examples
 of such transformations.
+&&&
+不少重要的操作符变换利用了运算符的交换律。在这一节，我们会看一些这些变换的例子。
+&&&
 4.1.1 Generalizing Join Sequencing
+&&&
+4.1.1 一般化连接操作序列
+&&&
 In many of the systems, the sequence of join operations is
 syntactically restricted to limit search space. For example, in the
 System R project, only linear sequences of join operations are
 considered and Cartesian product among relations is deferred until
 after all the joins.
+&&&
+在很多系统中，连接操作的序列在语义上被限制来限制搜索空间。例如，在System R，只会考虑线性的连接操作，并且对关系的笛卡尔积会被延迟到所有的连接之后。
+&&&
 Since join operations are commutative and associative, the
 sequence of joins in an operator tree need not be linear. In
 particular, the query consisting of join among relations
@@ -224,6 +236,9 @@ the search space considerably1. Although there has been some
 studies of merits of exploring the bushy join sequences, by and
 large most systems still focus on linear join sequences and only
 restricted subsets of bushy join trees.
+&&&
+因为连接操作是可交换和可结合的，操作符树的连接序列不一定要是线性的。例如，对于关系R1,R2,R3,R4的表示和求值可以是Join(Join(A,B),Join(C,D))。这样的查询书被叫做树形的，可见Fig2。树形的连接序列需要物化和中间表。树形的运算符树可能会得到一个搞笑的执行计划，它们也把遍历搜索空间的花费变大。尽管已经有一些树形连接序列的研究，大部分系统仍然只考虑线性连接序列还有一些树形连接树的子集。
+&&&
 
 Deferring Cartesian products may also result in poor performance.
 In many decision-support queries where the query graph forms a
@@ -235,8 +250,14 @@ be adapted on a per query basis so as to restrict the “bushy”-ness
 of the join trees and to allow or disallow Cartesian products [46].
 However, it is nontrivial to determine a priori the effects of such
 tuning on the quality and cost of the search.
+&&&
+延迟笛卡尔积可能会导致很差的性能。在很多决策支持查询中，查询图会形成一个星型，人们已经观察到一个对于适当数量结点做的笛卡尔积（用OLAP术语“维度化”的表）会导致耗费的大量减少。在一个可扩展系统中，连接遍历器的性能可以适应于每个查询，这样就能限制树形的连接树，并且可以允许和不徐云笛卡尔积。然后，根据搜索的质量和耗费来决定这种开关还是不那么容易做的。
+&&&
 
 4.1.2 Outerjoin and Join
+&&&
+4.1.2 外连接和连接
+&&&
 One-sided outerjoin is an asymmetric operator in SQL that
 preserves all of the tuples of one relation. Symmetric outerjoins
 preserve both the operand relations. Thus, (R LOJ S), where LOJ
@@ -255,6 +276,11 @@ freely reordered among themselves. As with other
 transformations, use of this identity needs to be cost-based. The
 identities in [53] define a class of queries where joins and
 outerjoins may be reordered.
+&&&
+单边的外连接是SQL中一种非对称的操作符，它会保留一个关系中的所有元组。队员的外连接保留了作为操作数的关系的所有元组。因此(R LOJ S)，这里LOJ是做外链接，保留了R的所有元组。在自然连接得到的元组的基础上，上面的操作包括了所有的R那些被过滤掉的元组（S的属性都变成是NULL）。不像自然连接一组外连接和自然连接不能随意地交换。然而，当如果对于(R,S)的外连接的断言是基于(S,T)的，下面的等式就会成立：
+Join(R, S LOJ T) = Join (R,S) LOJ T
+如果上面的结合律能够重复使用，我们得到了一个具有相同语义的表达式，这个表达式会在做所有外连接之前做完所有的连接。对于前面那部分，连接就可以很自由地重新排序了。就像其他变换一样，需用这些变化必须基于耗费。在[53]的等式定义了一组查询，这写查询里面，连接和外连接可以重排序。
+&&&
 
 4.1.3 Group-By and Join
 ![fig4](./1fig4.jpg)
