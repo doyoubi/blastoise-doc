@@ -272,6 +272,11 @@ rejected (and the transaction is aborted). Otherwise, W is allowed to create a n
 In many applications, locking has been found to constrain concurrency and to add an unnecessary
 overhead. The locking approach has the following disadvantages [Kung and Robinson
 81]:
+&&&
+4.4 乐观无锁机制
+在很多应用程序中，所已经被发现了限制了并发并且加入了不必要的开销。锁方法有下面的缺陷[Kung and Robinson
+81]:
+&&&
 1. Lock maintenance represents an unnecessary overhead for read-only transactions,
 which do not affect the integrity of the database.
 2. Most of the general-purpose deadlock-free locking mechanisms work well only in
@@ -280,11 +285,20 @@ mechanisms that provide high concurrency in all cases.
 3. When large parts of the database resides on secondary storage, locking of objects
 that are accessed frequently (referred to as congested nodes), while waiting for
 secondary memory access, causes a significant decrease in concurrency.
+&&&
+1. 维护锁对于只读事务来说引入了不必要的开销，并且不影响数据库的完整性。
+2. 大部分通用的无死锁锁机制只有在一些场景才能工作，在其它则不能。在所有情况下，锁都不能提供高并发支持。
+3. 当数据库的大部分都在次级存储上，锁一个已经被访问的对象（被称为阻塞结点），当等待二级存储的时候，就会导致严重的并发性能降低。
+&&&
 4. Not permitting locks to be unlocked until the end of the transaction, which although
 not required is always done in practice to avoid cascaded aborts, decreases
 concurrency.
 5. Most of the time it is not necessary to use locking to guarantee consistency since
 most transactions do not overlap; locking may be necessary only in the worst case.
+&&&
+4. 在事务结束前不允许解锁，虽然并不一定要这么做单在时间做会为了防止连续的终止而很常用，这会降低并发能力。
+5. 大部分时间为了保证一致性都用来锁了很浪费，因为大部分的事务不会重叠；要锁可能只是最坏的情况，
+&&&
 To avoid these problems, Kung and Robinson presented the concept of "optimistic" concurrency
 control by introducing two families of concurrency control mechanisms (serial validation
 and parallel validation) that do not use locking. They require each transaction to consist of two
@@ -294,17 +308,28 @@ to be written. Then, if it can be established during the validation phase that t
 transaction made will not cause loss of integrity, i.e., that they are serializable with respect to all
 committed transactions, the local copies are made global and thus accessible to other transactions
 in the write phase.
+&&&
+为了规避这些问题，Kung和Robinson展示了一种乐观并发控制的概念，它引用了两组不用锁的并发控制机制（串行化校验和并行化校验）。他们需要每个事务都由两个阶段组成：读阶段，验证阶段还有可选的写极端。在过度阶段中，所有被写记录的写都是在本地完成的（也成为过度版本）。然后如果可以在验证阶段被事实那么就不会产生完整性问题，就是说，他们对于所有的提交事务都是串行化的，本地的副本会写进全局然后因此可以被其它事务看到。
+&&&
 Validation is done by assigning each transaction a timestamp at the end of the read phase
 and synchronizing using timestamp ordering. The correctness criteria used for validation are
 based on the notion of serial equivalence. Any schedule produced by this technique ensures that
 if transaction Ti has a timestamp less than the timestamp of transaction Tj then the schedule is
 equivalent to the serial schedule Ti followed by Tj. This can be ensured if any one of the following
 three conditions holds:
+&&&
+验证是通过在每一个事务的读阶段最后给一个时间错然后利用时间戳同步来是吸纳。验证的正确性是基于跟串行化是相等的。任何这种技术导致的调度会保证如果Ti事务已经有了一个比Tj事务小的时间戳，那么调度就会等价于串行地执行Ti然后Tj。如果任何下面三个中的一个成立，这就能被保证：
+&&&
 1. Ti completes its write phase before Tj starts its read phase.
 2. The set of data items written by Ti does not intersect with the set of data items read
 by Tj, and Ti completes its write phase before Tj starts its write phase.
 3. The set of data items written by Ti does not intersect with the set of data items read
 or written by Tj, and Ti completes its read phase before Tj completes its read phase.
+&&&
+1. Ti在Tj开始读阶段前完成了它的写阶段。
+2. 被Ti写的数据集不会跟Tj读的数据集有交集，然后Ti在Tj开始写阶段前完成了它的写阶段。
+3. 被Ti写的数据集不会跟Tj读或写的数据集有交易，然后Ti在Tj完成读阶段前完成了它的读阶段。
+&&&
 
 Although optimistic concurrency control allows more concurrency under certain circumstances,
 it decreases concurrency when the read and write sets of the concurrent transactions
@@ -315,6 +340,9 @@ disadvantage. Since operations in advanced transactions are generally long-lived
 a module), rolling them back and restarting them wastes all the work that these operations
 did (the object code produced by compilation). The inappropriateness of rolling back a long
 transaction in advanced applications is discussed further in section 5.
+&&&
+尽管乐观并行控制在一些情况下可以使用，它降低了并发中读写集合的重叠。例如Kung 和 Robinson 的协议会导致其中一个在简单Fig2中2PL的调度的事务被回滚和重启。在高级应用程序来看，以回滚作为主要的获取串行化的机制是一个很严重的弊端，因为在高级的十五中草种一般是常会时间的（例如编译一个模块），回滚然后重新开始他们会浪费很多工作（编译生成的目标代码）。高级应用程序中一个长事务的不必要的回滚会在第5节讨论。
+&&&
 
 4.5 Multiple Granularity Locking
 All the concurrency control protocols described so far operate on individual data items to
