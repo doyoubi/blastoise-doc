@@ -141,6 +141,9 @@ transaction mechanisms discussed later try to achieve.
 &&&
 
 4 TRADITIONAL APPROACHES TO CONCURRENCY CONTROL
+&&&
+4 并发控制的传统方法
+&&&
 In order to understand why conventional concurrency control mechanisms are too restrictive
 for advanced applications, it is necessary to be familiar with the basic ideas of the main
 serializability-based concurrency control mechanisms that have been proposed for, and implemented
@@ -150,9 +153,16 @@ locking protocols, timestamp ordering, optimistic concurrency control, multivers
 and nested transactions, which is relatively orthogonal to the first four mechanisms. In
 this section, we briefly describe these five approaches. For a comprehensive discussion and survey
 of the topic, the reader is referred to [Bernstein and Goodman 81] and [Kohler 81].
+&&&
+为了理解为什么传统的并发控制机制对于高级的程序限制太大，有必要理解传统的基于可串行化的并发控制机制和其实现。大多数机制使用五个中的一个方法来做并发控制：两间断锁，一个非常流行的锁协议，时间序，乐观并发控制，多版本并发控制，嵌套事务，这跟前面四个都没什么关联。在这一节我们会大致地描述着五个方法。如果想深入理解这方面的研究，渎职应看[Bernstein and Goodman 81] 和 [Kohler 81]。
+&&&
 
 4.1 Locking Mechanisms
 4.1.1 Two-Phase Locking
+&&&
+4.1 锁机制
+4.1.1 两阶段锁
+&&&
 The two-phase locking mechanism (2PL) introduced by Eswaran et al. is now accepted as
 the standard solution to the concurrency control problem in conventional database systems. 2PL
 guarantees serializability in a centralized database when transactions are executed concurrently.
@@ -163,6 +173,9 @@ During the shrinking phase, a transaction is prohibited from acquiring locks. If
 tries during its growing phase to acquire a lock that has already been acquired by another transaction,
 it is forced to wait. This situation might result in deadlock if transactions are mutually
 waiting for each other’s resources.
+&&&
+两阶段锁（2PL）是由Eswaran et al引入的，现在已经被认为是传统关系型数据库的一个标准的并发处理解决方法。2PL保证了当事务并发执行时，事务能在中央数据库中可串行化。这个机制依赖于精心设计的事务，要求（1）不能锁其他事务已经上的锁，并且（2）上锁被分成两个阶段，只取锁和只解锁两个阶段[Eswaran et al. 76]。在解锁的极端，一个事务是不能获取锁的。如果一个事务尝试在取锁阶段取一个已经被其它事务上了的锁，它会被强制要求等待。这个阶段有可能会因为互相等对方的资源而导致死锁。
+&&&
 2PL allows only a subset of serializable schedules. In the absence of information about
 how and when the data items are accessed, however, 2PL is both necessary and sufficient to
 ensure serializability by locking [Yannakakis 82]. If we have prior knowledge about the order of
@@ -180,8 +193,14 @@ about the access patterns of the three transactions was used to construct the no
 schedule shown in the figure. This example demonstrates why 2PL is in fact not appropriate for
 advanced applications.
 ![fig3](./2fig3.jpg)  
+&&&
+2PL只允许部分的可串行化调度。然而，在没有数据是什么访问的情况下，2PL是一种必须且有效的方法去用锁保证可线性化[Yannakakis 82]。如果我们在高级应用程序中预先知道了访问数据的顺序，我们可以构造非2PL的锁协议来保证可串行化。其中一个这样的协议就是树协议，用于访问数据遵循偏序关系的并发事务中。为了阐明这个协议，假设有三个程序员，Bob参加了Mary和John的团队然后现在他们工作在相同的项目上。假设三人现在想以Fig3的方式并发修改模块A和B。树协议就可以允许这样的调度来执行因为它是可串行化的（跟TBob TJohn TMary一直）尽管它不符合两阶段锁协议（因为TJohn在锁B前解锁了A）。构造这样的S1是可以的，因为所有的事务在B写之前先写了A。这种三个事务访问的模式被用于构造非2PL调度，就如图那样。这个例子阐述了为什么2PL事实上并不适用于高级应用。
+&&&
 
 4.2 Timestamp Ordering
+&&&
+4.2 时间戳顺序
+&&&
 One of the problems of locking mechanisms is deadlock, which occurs when two or more
 transactions are mutually waiting for each other’s resources. This problem can be solved by
 assigning each transaction a unique number, called a timestamp, chosen from a monotonically
@@ -194,6 +213,9 @@ and restart if it cannot be granted the request, or (3) preempt the other transa
 the resource. A scheduling protocol decides which one of these three actions to take after comparing
 the timestamp of the requesting transaction with the timestamps of conflicting transactions.
 The protocol must guarantee that a deadlock situation will not arise.
+&&&
+锁机制的其中一个问题是死锁，出现在两个或多个事务互相等对方的资源时。这个问题可以被一个方法解决，每个事务被绑定一个数字，叫时间戳，从一个单调底层的序列中选择，一般来说是来自一个取使劲的函数。[Kohler 81]使用时间戳，一个并发控制机制可以完全用事务的时间戳来协调。[Rosenkrantz et al. 78]这个机制要求了请求访问被占有资源的事务（1）等到其他事务释放资源，（2）自己停止并重启自己，（3）比别人先拿到资源。一个调度协议会决定三个行为中会用那个行为，通过比较冲突事务的时间戳。这个协议必须保证不会发生死锁。
+&&&
 Two of the possible alternative scheduling protocols used by timestamp-based mechanisms
 are: (1) the WAIT-DIE protocol, which forces a transaction to wait if it conflicts with a running
 transaction whose timestamp is more recent, or to die (abort and restart) if the running
@@ -201,6 +223,9 @@ transaction’s timestamp is older; and (2) the WOUND-WAIT protocol, which allow
 to wound (preempt by suspending) a running one with a more recent timestamp, or forces
 the requesting transaction to wait otherwise. Locks are used implicitly in this technique since
 some transactions are forced to wait as if they were locked out.
+&&&
+两个可能的其它使用了基于时间戳机制的调度协议是（1）WAIT-DIE协议，强制一个事务在冲突时等待，或者自己结束或重启自己如果自己的时间戳比较靠后；还有（2）WOUND-WAIT协议，允许事务杀死一个或多个比自己造的事务，或者强制等待的事务等待。这种机制隐式地使用了锁因为一些事务需要被强制等待然后被唤醒。
+&&&
 
 4.3 Multiversion Timestamp Ordering
 The timestamp ordering mechanism above assumes that only one version of a data item
