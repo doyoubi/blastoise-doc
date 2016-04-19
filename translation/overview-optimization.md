@@ -512,6 +512,9 @@ Kim’s work [35] and it was subsequently refined in [44].
 
 4.3 Using Semijoin Like Techniques for
 Optimizing Multi-Block Queries
+&&&
+43 使用类Semijoin的技术来优化多块查询。
+&&&
 In the previous section, I presented examples of how multi-block
 queries may be collapsed in a single block. In this section, I
 discuss a complementary approach. The goal of the approach
@@ -527,6 +530,9 @@ needed in B as well as to ensure that the results produced by B are
 relevant to A as well. This technique requires introducing new
 table expressions and views. For example, consider the following
 query from [56]:
+&&&
+在前面的一节，我们展示了一些多块查询如果被折叠成单块的例子。在这一节，我会讨论一种互补的方法。这节讨论得方法的目标是利用不同块中断言的选择性4。概念上着类似于用semijoin来从位置A到远处的位置B传递A相关的信息，这样B向A传了不需要的元组。在多块查询中，A和B是在不同的查询快但是是同一个查询的不同部分，因此传输耗费不是一个问题。然而，来自A的信息用于减少B的计算，同时保证了B产出的结果是跟A相关的。这种技术需要增加新的表表达式和试图。例如考虑来自[56]的这样一个查询
+&&&
 CREATE VIEW DepAvgSal As (
 SELECT E.did, Avg(E.Sal) AS avgsal
 FROM Emp E
@@ -536,11 +542,25 @@ FROM Emp E, Dept D, DepAvgSal V
 WHERE E.did = D.did AND E.did = V.did
 AND E.age < 30 AND D.budget > 100k
 AND E.sal > V.avgsal
+&&&
+CREATE VIEW DepAvgSal As (
+SELECT E.did, Avg(E.Sal) AS avgsal
+FROM Emp E
+GROUP BY E.did)
+SELECT E.eid, E.sal
+FROM Emp E, Dept D, DepAvgSal V
+WHERE E.did = D.did AND E.did = V.did
+AND E.age < 30 AND D.budget > 100k
+AND E.sal > V.avgsal
+&&&
 The technique recognizes that we can create the set of relevant
 E.did by doing only the join between E and D in the above
 query and projecting the unique E.did. This set can be passed to
 the view DepAvgSal to restrict its computation. This is
 accomplished by the following three views.
+&&&
+这个技术识别出在上述的查询和对E.did的唯一投影钟，我们可以通过连接E和D来创建E.did的集和。这个集和可以传给DepAvgSal试图来减少计算量。这使用了下面三个视图来完成：
+&&&
 CREATE VIEW partialresult AS
 (SELECT E.id, E.sal, E.did
 FROM Emp E, Dept D
@@ -552,11 +572,31 @@ CREATE VIEW LimitedAvgSal AS
 (SELECT E.did, Avg(E.Sal) AS avgsal
 FROM Emp E, Filter F
 WHERE E.did = F.did GROUP BY E.did)
+&&&
+CREATE VIEW partialresult AS
+(SELECT E.id, E.sal, E.did
+FROM Emp E, Dept D
+WHERE E.did=D.did AND E.age < 30
+AND D.budget > 100k)
+CREATE VIEW Filter AS
+(SELECT DISTINCT P.did FROM PartialResult P)
+CREATE VIEW LimitedAvgSal AS
+(SELECT E.did, Avg(E.Sal) AS avgsal
+FROM Emp E, Filter F
+WHERE E.did = F.did GROUP BY E.did)
+&&&
+
 The reformulated query on the next page exploits the above views
 to restrict computation.
 SELECT P.eid, P.sal
 FROM PartialResult P, LimitedDepAvgSal V
 WHERE P.did = V.did AND P.sal > V.avgsal
+&&&
+下页被重写的查询使用了上面的试图来减少计算量。
+SELECT P.eid, P.sal
+FROM PartialResult P, LimitedDepAvgSal V
+WHERE P.did = V.did AND P.sal > V.avgsal
+&&&
 The above technique can be used in a multi-block query
 containing view (including recursive view) definitions or nested
 subqueries [42,43,56,57]. In each case, the goal is to avoid
@@ -571,6 +611,9 @@ degenerate application of this technique is passing the predicates
 across query blocks instead of results of views. This simpler
 technique has been used in distributed and heterogeneous
 databases and generalized in [36].
+&&&
+以上的技术可以用于包含视图（包括递归视图）的多块查询或者多层子查询[42,43,56,57]。在每个情况中，目标都是减少试图或者多层子查询的冗余计算。同时我们也要一是到计算这些视图（上面例子中的PartialResult）和使用这样的试图来减少计算量的权衡。上述沌河和semijoin的正式关系已经被展示在[56]中，并且已经被结合于基于耗费的优化器中。注意这种技术的一种退化应用是传递断言到查询快而不是试图。这种简单的技术已经被用于分布式和混合型的数据库，并且在[36]得到一般化阐述。
+&&&
 
 5. STATISTICS AND COST ESTIMATION
 Given a query, there are many logically equivalent algebraic
