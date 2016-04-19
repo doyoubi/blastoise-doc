@@ -345,6 +345,9 @@ transaction in advanced applications is discussed further in section 5.
 &&&
 
 4.5 Multiple Granularity Locking
+&&&
+4.5 多粒度锁
+&&&
 All the concurrency control protocols described so far operate on individual data items to
 achieve synchronization of transactions. It is sometimes desirable, however, to able to access a
 set of data items as a single unit, e.g., to effectively lock each item in the set in one operation
@@ -360,6 +363,9 @@ implicitly. Two modes of locks were defined: exclusive and shared. An exclusive 
 excludes any other transaction from accessing (reading or writing) the node; a shared (S) lock
 permits other transaction to read the same node concurrently, but prevents any updating of the
 node.
+&&&
+所有目前描述到的并发控制协议都是对单个数据项操作来实现事务的同步的。然而有事我们需要能够以一个单元来访问一组数据，例如要高效地对一个集合中每个数据项高速地加锁，而不是给每个数据项一个一个加锁。Gray et al。给出了一种多粒度的并发控制协议，目的是在访问数据库中对象的集合时能减少锁的数量[Gray et al. 75]。在他们的模型中，Gray et al.以树来组织数据项，其中小粒度的嵌在大粒度的数据中。每个非野子结点代表与子孙相关的数据。这跟上面提到的树协议不同，它们的树（或图）不表示访问数据的顺序，而是用来组织数据对象。树的根节点表示整个数据库。事务可以显式地锁结点，同时会把所有子孙都锁上。这定义了两种锁的模式：互斥和共享。一个互斥（X）锁防止任何其他事务访问（读或写）结点；一个共享（S）锁允许其他事务并发读结点，但不给更新结点。
+&&&
 To determine whether to grant a transaction a lock on a node (given these two modes), the
 transaction manager would have to follow the path from the root to the node to find out if any
 other transaction has explicitly locked any of the ancestors of the node. This is clearly inefficient.
@@ -375,6 +381,9 @@ exclusive-mode locks. A compatibility matrix for the five kinds of locks is defi
 figure 4. The matrix is used to determine when to grant lock requests and when to deny them.
 Finally, a multiple granularity protocol based on the compatibility matrix was defined as
 follows:
+&&&
+为了决定是否给一个事务某个结点的锁（给定的这两个模式），事务管理器必须要从根节点一直遍历看看其它事务有没有已经锁了路径上的结点。这很明显会低效。为了解决这个问题，第三种叫做意图锁模式被发明出来[Gray 78]。在锁结点之前，所有结点的祖先必须被意图锁锁住。特别的，结点可以被五种模式锁住。一个非野子结点可以以意图-共享(IS)模式来指定子孙将以共享模式(S)锁住。类似的，一个意图-互斥锁是说会在底层锁上互斥模式锁。一个对于非叶子结点的共享和意图互斥(SIX)锁会在底层锁上互斥模式锁。一个对于这五种锁的呼唤矩阵在Fig4中。这个矩阵是用于决定什么时候请求什么锁还有什么时候拒绝请求。最后一种基于呼唤矩阵的多粒度协议如下定义：
+&&&
 ![fig3](./2fig4.jpg)
 1. Before requesting an S or IS lock on a node, all ancestor nodes of the requested
 node must be held in IX or IS mode by the requester.
@@ -383,12 +392,20 @@ node must be held in SIX or IX mode by the requester.
 3. Locks should be released either at the end of the transaction (in any order) or in
 leaf to root order. In particular, if locks are not held to the end of a transaction, it
 should not hold a lock on a node after releasing its ancestors.
+&&&
+1. 在请求一个结点的S或者IS锁之前，请求方必须已经得到这个结点所有祖先的IX或者IS模式锁。
+2. 在请求一个结点的X，SIX或者IX锁之前，请求方必须得带所有该结点的祖先的SIX或者IX模式锁。
+3. 锁必须在事务的结尾（以任何顺序）或者以叶子到根的顺序释放。特别的，如果一个锁在事务的末尾没有内锁住，这个事务也不应该在释放其祖先后或者这个锁。
+&&&
 The multiple granularity protocol increases concurrency and decreases overhead especially
 when there is a combination of short transactions with a few accesses and transactions that last
 for a long time accessing a large number of objects such as audit transactions that access every
 item in the database. The Orion object-oriented database system provides a concurrency control
 mechanism based on the multi-granularity mechanism described above [Kim et al. 88; Garza and
 Kim 88].
+&&&
+多例如度协议提升了并发能力并且降低了耗费，特别是在当有一组很少访问数据并且会花很多时间来访问大量对象的事务组合，例如访问数据库中每个数据项的审计事务。Orion面向对象数据库系统提供了一种基于上述多粒度机制的并发控制机制[Kim et al. 88; Garza 和 Kim 88]。
+&&&
 
 4.6 Nested Transactions
 A transaction, as presented above, is a set of primitive atomic actions abstracted as read and
