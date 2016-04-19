@@ -616,6 +616,9 @@ databases and generalized in [36].
 &&&
 
 5. STATISTICS AND COST ESTIMATION
+&&&
+5. 统计和耗费的估计
+&&&
 Given a query, there are many logically equivalent algebraic
 expressions and for each of the expressions, there are many ways
 to implement them as operators. Even if we ignore the
@@ -631,11 +634,20 @@ as its cost estimates. Cost estimation must be efficient since it is
 in the inner loop of query optimization and is repeatedly invoked.
 The basic estimation framework is derived from the System-R
 approach:
+&&&
+给定一个查询，它有很多逻辑上相等的表达式，然后又有很多操作符可以实现。就算我们忽略了遍历搜索空间的计算复杂度，仍有有着如何决定那种操作符树才是耗费资源最好的。资源可以是CPU时间，IO耗费，内存，传输带块或者是它们中一些的组合。因此，给定一个操作符树（部分或者是完整的），精确且高效地计算它们的耗费是基础且重要的。耗费估算要精确因为优化出来的情况就是估算的情况。耗费估算必须高效因为它是查询优化器中最内层的循环体，然后会被不停地运行。最基础的耗费估算框架由System-R衍生而来：
+&&&
 1. Collect statistical summaries of data that has been stored.
 2. Given an operator and the statistical summary for each of its
 input data streams, determine the:
 (a) Statistical summary of the output data stream
 (b) Estimated cost of executing the operation
+&&&
+1. 收集已经被存储好的统计概述。
+2. 给定一个操作符和对于每个输入流的统计概述，决定：
+(a) 输出数据流的统计概览
+(b) 执行操作的耗费估算
+&&&
 Step 2 can be applied iteratively to an operator tree of arbitrary
 depth to derive the costs for each of its operators. Once we have
 the costs for each of the operator nodes, the cost for the plan may
@@ -645,15 +657,25 @@ for the stored data that are used in cost optimization and efficient
 ways of obtaining such statistical information. We also discuss
 how to propagate such statistical information. The issue of
 estimating cost for physical operators is discussed in Section 5.2.
+&&&
+步骤2可以重复地用于操作符树的任意深度来计算每个操作符的耗费。一旦我们有了每个操作符结点的耗费，整个执行计划的耗费就可以通过结合每个操作符的耗费来得出。在5.1节中，我们讨论被存储的用于耗费优化的统计参数还有高效获取这些统计信息的方法。我们同样讨论如何传递这些统计信息。5.2节会讨论估算物理操作符耗费的问题。
+&&&
 It is important to recognize the differences between the nature of
 the statistical property and the cost of a plan. The statistical
 property of the output data stream of a plan is the same as that of
 any other plan for the same query, but its cost can be different
 from other plans. In other words, statistical summary is a logical
 property but the cost of a plan is a physical property.
+&&&
+同时也要意识到统计属性和执行计划耗费的不同之处。一个执行计划的输出流和统计属性对于同个查询的其它执行计划都是一样的，但这些执行计划之前会不一样。换句话说，统计概览是一种逻辑属性但执行计划的耗费是一种物理属性。
+&&&
 
 5.1 Statistical Summaries of Data
 5.1.1 Statistical Information on Base Data
+&&&
+5.1 数据的统计橄榄
+5.1.1 基础数据的统计信息
+&&&
 For every table, the necessary statistical information includes the
 number of tuples in a data stream since this parameter determines
 the cost of data scans, joins, and their memory requirements. In
@@ -664,6 +686,9 @@ estimate the selectivity of predicates on that column. Such
 information is created for columns on which there are one or more
 indexes, although it may be created on demand for any other
 column as well.
+&&&
+对于每一张表，必要的统计信息包括元组的数量因为这个参数会决定扫描，连接还有其他需要内存操作的规模。此外还有物理页的数量也是很重要的。数据流中对列的统计信息也值得注意因为这些数据会用于估算对于这些列的断言的选择性。如果这些列有一个或多个索引，这样的信息就会被计算，尽管其它列可能也会按需计算。
+&&&
 
 In a large number of systems, information on the data distribution
 on a column is provided by histograms. A histogram divides the
@@ -674,6 +699,9 @@ query, relevant columns of the histogram are loaded in memory.
 There are several choices for “bucketization” of values. In many
 database systems, equi-depth (also called equi-height) histograms
 are used to represent the data distribution on a column. If the table
+&&&
+在不少系统中，对某列的数据分布信息会以柱状图来表示。一个主张图把列中的值分为可k个桶。在很多情况下，k是一个常数然后决定了柱状图的精确度。然而，k同时也决定了内存的使用因为在优化查询的时候，相关列的柱状图会读入内存。还有很多对值得桶化操作。在很多数据库系统中等高柱状图也会用来表示列的数据分布。
+&&&
 has n records and the histogram has k buckets, then an equi-depth
 histogram divides the set of values on that column into k ranges
 such that each range has the same number of values, i.e., n/k.
@@ -683,6 +711,9 @@ tuned. It has been shown in [52] that such histograms are effective
 for either high or low skew data. One aspect of histograms
 relevant to optimization is the assumption made about values
 within a bucket. For example, in an equi-depth histogram, values
+&&&
+如果一张表有n个记录然后柱状图有k个桶，然后一个等高柱状图把列的数据分成了k个区间，并且每个区间含有相同数量的值，就是说n/k。亚索的柱状图把经常出现的数据放入一个单值桶中。这个单值桶的数量可以调节。[52]中已经表明这样的等高徒对于高或低的非对称数据都很搞笑。柱状图用于优化的其中一个方面是基于桶中数据的假设。例如在一个等高柱状图中，
+&&&
 within the endpoints of a bucket may be assumed to occur with
 uniform spread. A discussion of the above assumption as well as a
 broad taxonomy of histograms and ramifications of the histogram
@@ -693,6 +724,9 @@ and the second highest values are used since the min and max
 have a high probability of being outlying values. Histogram
 information is complemented by information on parameters such
 as number of distinct values on that column
+&&&
+前后两点中的数值分布是均匀分布的。[52]中讨论了上述假设和柱状图的宽度分类和柱状图精度结果。在缺少柱状图的时候，像最大最小值这样的信息就会被使用到。然而在实践中，第二最小和第二最高会被使用因为最大最小值会很有可能夸大了数值的实际情况。柱状图信息也会和一些参数信息互补，例如列中唯一值得数量。
+&&&
 Although histograms provide information on a single column,
 they do not provide information on the correlations among
 columns. In order to capture correlations, we need the joint
@@ -704,8 +738,14 @@ distinct pairs of values is used. For example, the statistical
 information associated with a multi-column index may consist of
 a histogram on the leading column and the total count of distinct
 combinations of column values present in the data.
+&&&
+尽管柱状图提供了单列的信息，他们不提供各列的相关性信息。为了抓住这些相关性，我们需要数值的相关分布。一种做法是考虑二维柱状图[45,51]。不幸的是，占用空间可能会非常大。在很多系统中，只有一些概览信息例如唯一的二元组数量会被使用，而不是提供一个很细节的相关分布。例如，数据中由关键列和唯一多列元组组成的多列索引的统计信息。
+&&&
 
 5.1.2 Estimating Statistics on Base Data
+&&&
+5.1.2 基础数据的统计估算
+&&&
 Enterprise class databases often have large schema and also have
 large volumes of data. Therefore, to have the flexibility of
 obtaining statistics to improve accuracy, it is important to be able
@@ -723,6 +763,9 @@ scheme, there exists a database where the error is significant. This
 result explains the past difficulty in estimation of the number of
 distinct values [50,27]. Recent work has also addressed the
 problem of maintaining statistics in an incremental fashion [18].
+&&&
+企业级的数据一般会有很大的表和大量的数据。因此为了灵活地获取统计数据以提高精度，精确且高效地估算统计参数也是很重要的。采样提供了一种可能的办法。然而挑战在于减少估算中的误差。在[48]中，Shapiro和Connell展示了对于给定的查询，值需要很小的采样就可以有很大的可能可以精确地或者给定查询的估算柱状图。然而这走偏了，因为我们的不妙是构建一个用于大量查询的相当精确的柱状图。我们现在的工作已经解决了这个问题[11]。我们也展示了计算唯一值被证明是很容易出错的，例如对于任意的表估算，可能有个数据库会错得很离谱。这回导致估算谓一致的困难，[50,27]。现在的工作已经使用了增量的办法来维护统计数据。
+&&&
 
 5.1.3 Propagation of Statistical Information
 It is not sufficient to use information only on base data because a
