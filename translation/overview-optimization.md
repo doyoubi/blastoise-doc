@@ -825,6 +825,9 @@ issues in query optimization.
 &&&
 
 6. ENUMERATION ARCHITECTURES
+&&&
+6. 遍历操作的架构
+&&&
 An enumeration algorithm must pick an inexpensive execution
 plan for a given query by exploring the search space. The System-
 R join enumerator that we discussed in Section 3 was designed to
@@ -835,11 +838,17 @@ transformations, the addition of new physical operators (e.g., a
 new join implementation) and changes in the cost estimation
 techniques. More recent optimization architectures have been
 built with this paradigm and are called extensible optimizers.
+&&&
+一个遍历算法必须通过搜索搜索空间来找出给定查询耗费低的执行计划。我们在第三节讨论得System-R连接遍历器是被设计来选择一个最优的线性连接顺序。一个软件工程考虑是去构建这样一个遍历器，它能很优雅地适应搜索空间的修改因为会加新的变换还有新的物理操作符（例如新的连接实现）还有耗费估计技术的改变。现在的架构已经是以这种方式来做的，被称为可扩展优化器。
+&&&
 Building an extensible optimizer is a tall order since it is more
 than simply coming up with a better enumeration algorithm.
 Rather, they provide an infrastructure for evolution of optimizer
 design. However, generality in the architecture must be balanced
 with the need for efficiency in enumeration.
+&&&
+构建一个可扩展的优化器是一个高级的任务因为这病不是简单的提出一种更好的遍历算法。而是，他们提供了一种便于优化器金华的基础设施。然而，架构的一般性和性能必须被很好地权衡。
+&&&
 We focus on two representative examples of such extensible
 optimizers: Starburst and Volcano/Cascades briefly. Despite their
 differences, we can summarize some of the commonality in them:
@@ -850,8 +859,14 @@ trees. Such rule engines also provide the ability to direct search to
 achieve efficiency. (c) Many exposed “knobs” that can be used to
 tune the behavior of the system. Unfortunately, setting these
 knobs for optimal performance is a daunting task
+&&&
+我们着重考虑两个这样的可扩展优化器的代表：Starburst and Volcano/Cascades。不考虑他们的不同，我们可以总结一些他们的相同点。（a）使用了一般化的耗费函数还有带有物理试行的操作符。（b）使用了一个规则引擎来让变换个罪恶去修改查询表达式或者操作符树。这样的规则引擎同时也提高了直接搜索的效率。（c）很多暴露出来的“旋钮”可以用于调节系统的行为。不幸的是，设置这些旋钮来优化性能是一个令人畏惧的工作。
+&&&
 
 6.1 Starburst
+&&&
+6.1 Starburst
+&&&
 Query optimization in the Starburst project [26] at IBM Almaden
 begins with a structural representation of the SQL query that is
 used throughout the lifecycle of optimization. This representation
@@ -862,6 +877,9 @@ the predicate structure as well as on whether the data stream is
 ordered. In the query rewrite phase of optimization [49], rules are
 used to transform a QGM into another equivalent QGM. Rules are
 modeled as pairs of arbitrary functions. The first one checks the
+&&&
+在IBM Almaden的Starburst project [26]的查询优化器开始执行在SQL查询的结构化表示，这会用于整个优化的生命周期。这种表示被称为Query Graph Model (QGM)。在QGM中，一个盒子代表了一个查询快并且在盒子之间用狐仙来表示跨块的表引用。每个盒子包含断言结构还有数据流的有序性。在优化的查询重写阶段[49]，规则用于转换一个QGM到另一个等价的QGM规则以一对任意的函数来表示。
+&&&
 condition for applicability and the second one enforces the
 transformation. A forward chaining rule engine governs the rules.
 Rules may be grouped in rule classes and it is possible to tune the
@@ -872,6 +890,9 @@ themselves are valid). The query rewrite phase does not have the
 cost information available. This forces this module to either retain
 alternatives obtained through rule application or to use the rules in
 a heuristic way (and thus compromise optimality).
+&&&
+第一个用于检查是否可以使用，第二个用于做转换。一个向前的链接起来的规则引擎来管理这些规则。规则是以规则类来分组的并且可以调节某些搜索的规则优先级。因为任何这些规则的使用会得到一个合法的QGM，任何规则应用的集合保证了查询语义的不变形（假设规则本身是合法的）。这个规则重写阶段不会有任何可用的耗费信息。这要求了这个模块要么通过规则应用保留可选项，要么以一种启发式的方法来使用这些规则（妥协了优化）。
+&&&
 
 The second phase of query optimization is called plan
 optimization. In this phase, given a QGM, an execution plan
@@ -890,6 +911,9 @@ bottom-up. Thus, with each physical operator, a function is
 associated that shows the effect of the physical operator on each
 of the above properties. The join enumerator in this system is
 similar to System-R’s bottom-up enumeration scheme.
+&&&
+查询优化的第二阶段叫做执行计划优化，在这个阶段中，给定了一个QGM，一个执行计划（操作符树）会被选中。在StarBusrst中，一个物理执行计划（称为LOLEPOPs）可能会以多种方式组合起来去实现更高级的操作符。在Starburst，这样的组合是以类似于文法规则的语言来表示的[37]。在物理操作符的说法来讲，高级操作符的实现是用他们的变形来表示的。在计算这样的变形时，用于比较的执行计划代表了相同的物理和逻辑试行但是会有更高稿费的会被兼职。每个执行计划会有一个关系型的表述对应于他们的数学表示，即耗费估计还有物理属性（例如有序性）。这些属性会随着执行计划以自底向上传递。因此，对于每一个物理操作符，一个函数是可结合的，展示了物理操作符对于上述属性的影响。在这个系统中的连接遍历器类似于System-R的自底向上模式。
+&&&
 
 6.2 Volcano/Cascades
 The Volcano [23] and the Cascades extensible architecture [21]
@@ -902,6 +926,8 @@ conditions for applicability. Logical properties, physical
 properties and costs are associated with plans. The physical
 properties and the cost depend on the algorithms used to
 implement operators and its input data streams. For efficiency,
+&&&
+&&&
 Volcano/Cascades uses dynamic programming in a top-down way
 (“memoization”). When presented with an optimization task, it
 checks whether the task has already been accomplished by
@@ -911,6 +937,8 @@ logical transformation rule, an implementation rule, or use an
 enforcer to modify properties of the data stream. At every stage, it
 uses the promise of an action to determine the next move. The
 promise parameter is programmable and reflects cost parameters.
+&&&
+&&&
 
 The Volcano/Cascades framework differs from Starburst in its
 approach to enumeration: (a) These systems do not use two
@@ -920,3 +948,5 @@ physical operators occurs in a single step. (c) Instead of applying
 rules in a forward chaining fashion, as in the Starburst query
 rewrite phase, Volcano/Cascades does goal-driven application of
 rules.
+&&&
+&&&
