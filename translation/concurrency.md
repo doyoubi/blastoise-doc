@@ -408,6 +408,9 @@ Kim 88].
 &&&
 
 4.6 Nested Transactions
+&&&
+4.6 嵌套事务
+&&&
 A transaction, as presented above, is a set of primitive atomic actions abstracted as read and
 write operations. Each transaction is independent of other transactions. In practice, there is a
 need to compose several transactions into one unit (i.e., one transaction) for two reasons: (1) to
@@ -421,6 +424,9 @@ is really a serial ordering of the subtransactions. Interleaving the actions of 
 to provide concurrent behavior, on the other hand, can result in violation of serializability
 and thus consistency. What is needed is to execute the composition of transactions as a transaction
 in its own right, and to provide concurrency control within the transaction.
+&&&
+一个上述的事务，都是一组抽象为读写操作的原子操作。每个事务之间都是互相独立的。在实践中，也会有组合多个事务成为一个段元的需求（例如成为一个事务）。有两个原因：（1）为了提供模块化；和（2）为了提供更好的捆绑回滚。回滚问题可能是最重要的的一个，但这里不会说细节因为这篇文章主要还是关注并发控制。当组合一个或多个事务，模块化问题会与保证可串行化考虑在一起。一种方法是把事务拼接成一个事务。这回保证一致性但会降低并发能力因为会导致事务编程子事务的串行化结果。事务之间交织执行提供了并行行为，然而，也会导致违反可串行化并影响一致性。这里需要的是以一个事务自己的方式来执行一组事务，然后提供这个事务的并发控制。
+&&&
 The idea of nested spheres of control, which is the origin of the nested transactions concept,
 was first introduced by Davies [Davies 73] and expanded by Bjork [Bjork 73]. Reed presented a
 comprehensive solution to the problem of composing transactions by formulating the concept of
@@ -435,6 +441,9 @@ the failure of any action would cause the whole new composite transaction to fai
 design, timestamp ordering is used to synchronize the concurrent actions of subtransactions
 within a nested transaction. Moss designed a nested transaction system that uses locking for
 synchronization [Moss 85]. Moss’s design also manages nested transactions in a distributed system.
+&&&
+嵌套球形控制的思想，是嵌套事务概念的鼻祖，首先被介绍于[Davies 73]然后在[Bjork 73]得到扩展。Reed展示了一种易于理解的方法来用嵌套事务的概念来组合一组子事务；每个子事务自己也可以是嵌套事务。对于其他事务，在最高层的嵌套事务是可见的并且表现为也一个原子的事务。然而在内部，子事务是并发运行的并且他们的行为是用内部的并发控制机制来同步。最重要的点是子事务可能会失败然后重新开始或者被其它子事务代替，它们都是互相独立的，整个过程不会导致整个大事务崩溃或者重启。另一方面，在结合子操作在一起的情况中，任何子操作的失败都会导致整个操作的失败。在Reed的实际中，时间戳有序被用来同步同一个嵌套事务中的所有子事务的操作。Moss设计了一种嵌套事务系统，使用了锁来同步[Moss 85]。Moss的设计同时管理分布式系统中的事务。
+&&&
 ![fig5](./2fig5.jpg)
 As far as concurrency is concerned, the nested transaction model presented above does not
 change the meaning of transactions (in terms of being atomic) and it does not alter the concept of
@@ -445,6 +454,9 @@ nested transaction as shown in figure 5. Using Moss’s algorithm, the concurren
 John’s transaction and Mary’s transaction will produce the same schedule presented in figure 2.
 Within each transaction, however, the two subtransactions can be executed concurrently, improving
 the overall performance.
+&&&
+就目前提到的并发来说，上述的嵌套事务模型不会改变事务的函数（即原子性）并且不会改变可串行化的概念。唯一的有点就是性能的提供因为有可能可以在子查询那一级提高并发程度，特别是在多处理器系统中。为了说明这一点，考虑Fig2中的事务TJohn和TMary。我么可以构造如Fig5的嵌套事务。使用Moss的算法John和Mary的事务执行会产生Fig2中相同的序列。然而在每个事务中，两个子事务可以被并发执行，提高了整体的性能。
+&&&
 It should be noted that combinations of optimistic concurrency control, multiversion objects,
 and nested transactions is the basis for many of the concurrency control mechanisms
 proposed for advanced database applications. To understand the reasons behind this, we have to
@@ -452,3 +464,6 @@ address how the nature of data and computations in advanced database application
 requirements on concurrency control. We explore these new requirements in the next section,
 and then present several approaches that take these requirements into consideration in rest of the
 paper.
+&&&
+需要注意的是乐观并发控制，多版本对象，还有嵌套事务的组合二是很多被高级数据库应用鼓励的优化基础。为了理解这背后的原因，我们必须定位数据和计算的在高级数据库应用的自然存在的对并发的需求。我们在下一节研究这些新的的需求然后在剩下的内容中展示几个考虑这些新需要的解决办法。
+&&&
