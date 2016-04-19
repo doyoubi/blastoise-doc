@@ -1,12 +1,18 @@
 Concurrency Control in Advanced Database Applications
 
 3 THE CONSISTENCY PROBLEM IN CONVENTIONAL DATABASE SYSTEMS
+&&&
+3 传统数据库系统的一致性问题
+&&&
 Database consistency is maintained if each data item in the database satisfies some
 application-specific consistency constraints. For example, in a distributed airline reservation
 system, one consistency constraint might be that each seat on a flight can be reserved by only
 one passenger. It is often the case, however, that not all consistency constraints are known before
 hand to the designers of general-purpose DBMSs, because of the lack of information about
 the computations in potential applications.
+&&&
+如果数据库中每个数据项的一致性约束能够满足，那么我们称一致性能保证。例如，在一个分布式的航班预定系统中，一个一致性约束是，一个一致性的约束可能是每个座位只能被一个乘客预定一次。但是通常情况下，不是所有的一致性约束都可以在通用惯性系数据库设计者做的时候就能知道，因为失去了嵌套应用的一些信息。
+&&&
 Given the lack of knowledge about the application-specific semantics of database operations,
 and the need to design general mechanisms that cut across many potential applications, the
 best a DBMS can do is to abstract all operations on a database to be either a read operation or a
@@ -16,8 +22,14 @@ of the particular application. Ignoring the possibility of bugs in the DBMS prog
 application program, inconsistent data then results from two main sources: (1) software or
 hardware failures such as bugs in the operating system or a disk crash in the middle of operations,
 and (2) concurrent access of the same data item by multiple users or programs.
+&&&
+我们知道了我们失去了应用特定的数据库操作的业务语义，然后要设计通用的机制来满足潜在的应用，数据库能做的就是抽象出所有数据库操作读操作或者写操作，不管具体的计算。然后就能保证数据库无论在具体系统的语义如何读操作和写操作总是能保持一致性。忽略数据库软件潜在的漏洞，不一致数据出现的可能原因为是：(1)软件或硬件的错误例如操作系统错误或者磁盘在操作的中间宕机，和(2)多用户多程序的对数据的并发获取。
+&&&
 
 3.1 The Transaction Concept
+&&&
+3.1 事务的概念
+&&&
 To solve these problems, the operations performed by a process that is accessing the
 database are grouped into sequences called transactions [Eswaran et al. 76]. Thus, users would
 interact with a DBMS by executing transactions. In traditional DBMSs, transactions serve three
@@ -26,6 +38,9 @@ a complete task; (2) they are atomicity units whose execution preserves the cons
 the database; and (3) they are recovery units that ensure that either all the steps enclosed within
 them are executed, or none are. It is thus by definition that if the database is in a consistent state
 before a transaction starts executing, it will be in a consistent state when the transaction terminates.
+&&&
+为了解决这些问题，操作数据库的操作会被组合成一个称为事务的序列[Eswaran et al. 76]。因此，用户通过执行事务来跟数据库打交道。在传统的关系型数据库中，事务是为了三个不同的目的[Lynch 83]：(1)它们是把完成任务的操作封装起来的逻辑上的单元；(2)它们是能保证一致性的运行单元；和(3)它们是恢复单元，能够保证要么它们包括的所有步骤都能完成，要么全部都不能完成。因此如果一个数据库在开始一个事务前是一直的，那么开执行一个事务后还是一致的。
+&&&
 In a multi-user system, users execute their transactions concurrently, and the DBMS has to
 provide a concurrency control mechanism to guarantee that consistency of data is maintained in
 spite of concurrent accesses by different users. From the user’s viewpoint, a concurrency control
@@ -34,6 +49,9 @@ submitted to the DBMS by a user eventually gets executed; and (2) that the resul
 performed by each transaction are the same whether it is executed on a dedicated system
 or concurrently with other transactions in a multi-programmed system [Bernstein et al. 87;
 Papadimitriou 86].
+&&&
+在一个多用户系统中，用户并发地运行他们的任务，然后DBMS必须提供一个并发控制机制来保证尽管数据被不同用户并发读写，但是一致性还是能够保证。
+&&&
 
 Let us follow up on our previous example to demonstrate the concept of transactions. John
 and Mary are assigned the task of fixing two bugs that were suspected to be in modules A and
@@ -44,6 +62,9 @@ and Mary agree that John will fix the first bug and Mary will fix the second. Jo
 transaction TJohn and proceeds to modify procedure p1 in module A. After completing the
 modification, he starts modifying procedure p3 in module B. At the same time, Mary starts a
 transaction TMary to modify procedure p2 in module A and procedure p4 in module B.
+&&&
+浪我们接着刚才的例子来说明事务的概念。John和Mary被分配了修复两个漏洞的任务，这两个漏洞怀疑是来自于模块A和B。第一个漏洞是由于A中p1函数的问题，它会被B模块中的p3函数调用（因此解决这个漏洞可能会同时影响p1和p3）。第二个漏洞是由于A模块的p2函数的接口问题，它会被B模块中的p4函数调用。John和Mary决定John修第一个漏洞然后Mary修第二个。John开始一个事务TJohn然后修改了A模块中的p1函数。然后完成了修改，然后他开始修改B模块中的p3函数。同时，Mary开始了一个事务TMary然后修改A模块中的p2函数然后是B模块的p4函数。
+&&&
 ![fig2](./2fig2.jpg)  
 Although TJohn and TMary are executing concurrently, their outcomes are expected to be the
 same, had each of them been executed on a dedicated system. The overlap between TMary and
@@ -52,8 +73,14 @@ an example of a schedule made up by interleaving operations from TJohn and TMary
 that gives each transaction a consistent view of the state of the database is considered a consistent
 schedule. Consistent schedules are a result of synchronizing the concurrent operations of
 users by allowing only those operations that maintain consistency to be interleaved.
+&&&
+尽管TJohn和TMary是并行执行的，他们的结果输出都可以认为是一样的，两个都运行在同一个系统上。TMary和TJohn的重写会导致两个事务编程一个执行序列，称为调度。Fig2表明了TJohn和TMary由于调度交替执行的一个例子。一个调度如果会给每个事务一个一致的数据库状态，那么这个调度就认为是遵守一致性的调度。一致性调度室同步多用户并发操作的结果，通过维护遵守一致性的操作互相交织来完成。
+&&&
 
 3.2 Serializability
+&&&
+3.2 串行化
+&&&
 Let us give a more formal definition of a consistent schedule. Since transactions are consistency
 preserving units, if a set of transactions T1, T2, ..., Tn are executed serially (i.e., for every
 i= 1 to n-1, transaction Ti is executed to completion before transaction Ti+1 begins), consistency
@@ -61,6 +88,9 @@ is preserved. Thus, every serial execution (schedule) is correct by definition. 
 that a serializable execution (one that is equivalent to a serial execution) is also correct.
 From the perspective of a DBMS, all computations in a transaction either read or write a data
 item from the database. Thus, two schedules S1 and S2 are said to be computationally equivalent
+&&&
+让我们给出一个一致性调度更正式的定义。因为事务是保证一致性的基本单元，如果一个事务集合T1, T2, ..., Tn 被让位是串行化的（就是说，对于每一个i= 1 到 n-1，事务Ti都是在Ti+1执行前执行结束的），一致性就能被保证。因此每个串行化执行（调度）从定义上就能看出是能保证一致性的。之后我们可以得到那样的可串行化执行（等价于串行化执行）同样也是正确的。从关系型数据库的角度来看，所有事务中的计算要么是读要么是写。因此，当如下条件成立时，两个调度S1和S2可以说是计算上一致的：
+&&&
 if [Korth and Silberschatz 86]:
 1. The set of transactions that participate in S1 and S2 are the same.
 2. For each data item Q in S1, if transaction Ti executes read(Q) and the value of Q
