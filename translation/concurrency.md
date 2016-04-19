@@ -228,6 +228,9 @@ some transactions are forced to wait as if they were locked out.
 &&&
 
 4.3 Multiversion Timestamp Ordering
+&&&
+4.3 多版本时间戳排序
+&&&
 The timestamp ordering mechanism above assumes that only one version of a data item
 exists. Consequently, only one transaction can access a data item at a time. This mechanism can
 be improved in the case of read-write synchronization by allowing multiple transient versions of
@@ -237,10 +240,17 @@ multiversion scheme introduced by Reed [Reed 78]. In Reed’s mechanism, each tr
 assigned a unique timestamp when it starts; all operations of the transaction are assigned the
 same timestamp. For each data item x there is a set of read timestamps and a set of <write
 timestamp, value> pairs, called transient versions.
+&&&
+上述提到的时间错排序机制只会给一个数据项标上一个版本的时间错。结果是，只有一个事务可以同时访问一个数据，这种机制在读写同步的时候可以改良成让多个过度版本的数据项被读然后被不同的的事务写，只要每个事务见到了所有数据项的一个一致的版本集合。这个Reed[Reed 78]引入一个多版本模式的基本事项。在Reed的机制中，每个事务在一开始会被赋予一个时间戳，每个事务中的操作都会被赋予相同的时间戳。对于每个数据项x就有一个读时间戳集合还有一个<写 时间戳 数据>二元组集合，称为过度版本。
+&&&
 The existence of multiple versions eliminates the need for write-write synchronization since
 each write operation produces a new version and thus can not conflict with another write operation.
 The only possible conflicts are those corresponding to read-from relationships [Bernstein et
 al. 87], as demonstrated by the following example.
+&&&
+多版本的出现使ww同步变得不再必要，因为每个写都会产生一个新的版本，因此不能跟其它写操作冲突。唯一可能的冲突时那些具有“从关系读”的的情况[Bernstein et
+al. 87]，下面将举例说明。
+&&&
 Let R(x) be a read operation with timestamp TS(R). R(x) is processed by reading the value
 of the version of x whose timestamp is the largest timestamp smaller than TS(R). TS(r) is then
 added to the set of read timestamps of item x. Similarly, let W(x) be a write operation that
@@ -254,6 +264,9 @@ had started by a period of time. In the meanwhile, other operations from a more 
 might have been performed. If any read timestamps lies in the interval (i.e., a transaction
 has already read a value of x written by a more recent write operation than W), then W is
 rejected (and the transaction is aborted). Otherwise, W is allowed to create a new version of x.
+&&&
+设R(x)是一个时间戳为TS(R)的读操作。R(x)会读一个时间戳跟它最近但比它小的x版本的值。TS(r)然后就会被加到数据项x的读时间戳集合中。类似的，设W(x)施一个给x赋值为v的写操作，它的时间戳是TS(W)。假设interval(W)是从TS(W)到比TS(W)大的最小的时间戳的时间段（就是说，一个x的写版本，这个写版本离TS(W)最近但比它早）。一种出现这种情况的原因是因为一个事务的操作被延迟了（写操作可能是十五中的最后操作）。因为了这些延迟，一个操作属于Ti的Oi可能会在Ti开始一段时间后运行。同时，其他来自相同事务的操作可能会被执行。如果任何读时间戳在这个时间段里面（就是说，一个事务可能已经读了一个比W更早的的值），然后W就会被拒绝（然后事务被终止）。否则，W就可以创建一个x的新版本。
+&&&
 
 4.4 Optimistic Non-Locking Mechanisms
 In many applications, locking has been found to constrain concurrency and to add an unnecessary
