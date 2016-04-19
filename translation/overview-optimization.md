@@ -352,12 +352,21 @@ each division.
 G这个group-by操作符保证了这一点。这样的一步计算对于降低连接的耗费可能仍然非常有效，因为G1减少了数据的量。这个阶段的聚合要求聚合函数满足Agg(S U S’)可以由Agg(S)和Agg(S’)计算得到的特性。例如在一次除法中为了计算所有销售额的总量，我们可以使用Fig4(c)中的变换来做早起的聚合来获取每个产品的销售额。我们然后需要进一步的group-by来求和所有对于每个除法的总额。
 &&&
 
-4.2 Reducing Multi-Block Queries to Single-
-Block
+4.2 Reducing Multi-Block Queries to Single-Block
+&&&
+4.2 减少多块查询成为单块查询
+&&&
 The technique described in this section shows how under some
 conditions, it is possible to collapse a multi-block SQL query into
 a single block SQL query.
+&&&
+这节描述的技术展示了在一些情况下，可能可以把多块的SQL查询变成单块的SQL查询。
+&&&
+
 4.2.1 Merging Views
+&&&
+4.2.1 合并试图
+&&&
 Let us consider a conjunctive query using SELECT ANY. If one
 or more relations in the query are views, but each is defined
 through a conjunctive query, then the view definitions can simply
@@ -366,6 +375,9 @@ a query Q = Join(R,V) and view V = Join(S,T), then the
 query Q can be unfolded to Join(R,Join(S,T)) and may be
 freely reordered. Such a step may require some renaming of the
 variables in the view definitions.
+&&&
+让我们考虑使用SELECT ANY的连接查询。如果查询中一个或多个关系是试图，但是每一个都通过联合查询来定义，那么试图定义可以很简单地站到到一个单块的SQL查询。例如，如果一个查询Q = Join(R,V)还有试图V = Join(S,T)，然后查询Q可以斩块成Join(R,Join(S,T))然后可以自由地重排序。这样的一步可能需要对视图中的变量做重命名。
+&&&
 Unfortunately, this simple unfolding fails to work when the views
 are more complex than simple SPJ queries. When one or more of
 the views contain SELECT DISTINCT, transformations to move
@@ -379,8 +391,14 @@ we are trying to consider how we can transform it in a form such
 as Fig. 4(a) so that R1 and R2 may be freely reordered. While the
 transformations in Section 4.1.3 may be used in such cases, it
 underscores the complexity of the problem [6].
+&&&
+不幸的是，当这种视图是比简单SPJ查询更复杂时，这种简单的展开就不能工作了。当一个或多个视图包含SELECT DISTINCT的时候，延后DISTINCT的转换需要很小心地正确保持重复元组，[49]。更一般的，当视图包含了一个group by操作符，展开操作需要提前group-by操作符然后自由地重排连接和group-by操作符的能力以保证能够做优化。更确切的，给定一个Fig4(b)的查询然后我们尝试把它转换成Fig4(a)，这样R1和R2就可能自由地重排序。虽然4.1.3中的转换可以用于这样的情况，但是它会把问题搞复杂。
+&&&
 
 4.2.2 Merging Nested Subqueries
+&&&
+4.2.2 合并内存子查询
+&&&
 Consider the following example of a nested query from [13]
 where Emp# and Dept# are keys of the corresponding relations:
 SELECT Emp.Name
@@ -389,6 +407,15 @@ WHERE Emp.Dept# IN
 SELECT Dept.Dept# FROM Dept
 WHERE Dept.Loc=‘Denver’
 AND Emp.Emp# = Dept.Mgr
+&&&
+考虑这样一个内存子查询的例子，其中Emp#和Dept#是对应关系的属性：
+SELECT Emp.Name
+FROM Emp
+WHERE Emp.Dept# IN
+SELECT Dept.Dept# FROM Dept
+WHERE Dept.Loc=‘Denver’
+AND Emp.Emp# = Dept.Mgr
+&&&
 If tuple iteration semantics are used to answer the query, then the
 inner query is evaluated for each tuple of the Dept relation once.
 An obvious optimization applies when the inner query block
@@ -404,6 +431,13 @@ to: SELECT E.Name
 FROM Emp E, Dept D
 WHERE E.Dept# = D.Dept#
 AND D.Loc = ‘Denver’ AND E.Emp# = D.Mgr
+&&&
+如果以元组的迭代语义用来回答这个查询，那么内层的查询对于每个Dept关系的元组都会求值一次。当内层循环完全不包含外层查询的变量时，可以得到一种很明显的优化（不相关的）。在这种情况，内存查询只需要被求值一次。然而如果内存循环真的有外层循环的变量，我们称之为查询块是相关的。比如，在上面的查询中Emp.Emp#就作为关联变量。Kim [35] 和后面的一些工作 [16,13,44]已经找到了一些技术来解开嵌套的SQL查询然后把它们压扁到单个查询。例如，上面的多层查询可以变成
+SELECT E.Name
+FROM Emp E, Dept D
+WHERE E.Dept# = D.Dept#
+AND D.Loc = ‘Denver’ AND E.Emp# = D.Mgr
+&&&
 Dayal [13] was the first to offer an algebraic view of unnesting.
 The complexity of the problem depends on the structure of the
 nesting, i.e., whether the nested subquery has quantifiers (e.g.,
@@ -414,6 +448,11 @@ Emp.Dept# = Dept.Dept#)2. Once viewed this way, it is
 not hard to see why the query may be merged since:
 Semijoin(Emp,Dept,Emp.Dept# = Dept. Dept#) =
 Project(Join(Emp,Dept), Emp.*)
+&&&
+Dayal [13]是第一个提出了解多层循环的公式。问题复杂程度就看嵌套的结构，例如内套子查询是否包含两次（比如ALL,EXISTS），聚合或者都不包含。在最简单的情况，上面的查询就是例子，[13]发现元组的语义可以用Semijoin(Emp,Dept,
+Emp.Dept# = Dept.Dept#)2来模拟。一旦以这个方式来看，不容易会发现为什么查询可以这样被合并，因为
+Semijoin(Emp,Dept,Emp.Dept# = Dept. Dept#) = Project(Join(Emp,Dept), Emp.*)
+&&&
 Where Join(Emp,Dept) is on the predicate Emp.Dept# =
 Dept. Dept# . The second argument of the Project operator3
 indicates that all columns of the relation Emp must be retained.
@@ -426,6 +465,14 @@ FROM Dept
 WHERE Dept.num-of-machines ≥
 (SELECT COUNT(Emp.*) FROM Emp
 WHERE Dept.name= Emp.Dept_name)
+&&&
+其中Join(Emp,Dept)是以Emp.Dept# = Dept. Dept#断言做连接。Project操作符3的第二个参数指明了Emp的所有列都需要被保留。当聚合出现在子查询问题会变得更祖发，就如来自[44]中的例子，因为现在合并查询块需要把聚合提出来但又不会违反多层查询的语义。
+SELECT Dept.name
+FROM Dept
+WHERE Dept.num-of-machines ≥
+(SELECT COUNT(Emp.*) FROM Emp
+WHERE Dept.name= Emp.Dept_name)
+&&&
 It is especially tricky to preserve duplicates and nulls. To
 appreciate the subtlety, observe that if for a specific value of
 Dept.name (say d), there are no tuples with a matching
@@ -441,6 +488,13 @@ SELECT Dept.name FROM Dept LEFT OUTER JOIN Emp
 ON (Dept.name= Emp.dept_name )
 GROUP BY Dept.name
 HAVING Dept. num-of-machines < COUNT (Emp.*)
+&&&
+保留重复的NULL会更加的取巧。为了考察其中精妙之处，假设对于某个Dept.name值（设为d），没有对应的Emp.Dept_name，就是说， 尽管Dept.name = Emp.dept_name的断言没有通过，对于元组d仍然会有一个输出。然而，如果我们使用这节第一个查询用到的变换，这样就不会有d的输出，因为连接的断言没有通过。因此，为了保留聚合，我们必须用一个左外连接保留所有外查询的元组。更确切地说，上面的查询可以被正确地转换为：
+SELECT Dept.name FROM Dept LEFT OUTER JOIN Emp
+ON (Dept.name= Emp.dept_name )
+GROUP BY Dept.name
+HAVING Dept. num-of-machines < COUNT (Emp.*)
+&&&
 Thus, for this class of queries the merged single block query has
 outerjoins. If the nesting structure among query blocks is linear,
 then this approach is applicable and transformations produce a
@@ -452,6 +506,9 @@ sequence. Another approach to unnesting subqueries is to
 transform a query into one that uses table-expressions or views
 (and therefore, not a single block query). This was the direction of
 Kim’s work [35] and it was subsequently refined in [44].
+&&&
+因此，对于这种查询，合并出来的单块查询会有外连接。如果内存查询中的查询块是线性的，那么这个方式可以适合并产生一个包含线性连接和外连接的单块查询。这样我们就会发现，这些连接和外连接查询可以用到4.1.2节讲到的利用结合律技巧去先计算所有连接然后再是外连接。另外一种展开子查询的方法是把一个查询转换成一个使用表表达式和试图的查询（也因此不是一个单块查询）。这是Kim的工作[35]然后接下来在[44]得到完善。
+&&&
 
 4.3 Using Semijoin Like Techniques for
 Optimizing Multi-Block Queries
