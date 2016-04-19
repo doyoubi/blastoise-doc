@@ -768,6 +768,9 @@ problem of maintaining statistics in an incremental fashion [18].
 &&&
 
 5.1.3 Propagation of Statistical Information
+&&&
+5.1.3 统计信息的传递
+&&&
 It is not sufficient to use information only on base data because a
 query typically contains many operators. Therefore, it is important
 to be able to propagate the statistical information through
@@ -790,8 +793,14 @@ histograms may be “joined”. However, this raises the issue of
 aligning the corresponding buckets. Finally, when histogram
 information is not available, then ad-hoc constants are used to
 estimate selectivity, as in [55].
+&&&
+使用基础数据是不够的，因为一个查询一般会包含很多操作符。因此通过操作符传递统计数据很重要。最简单的情况是选择操作符。如果有一个关于列A的柱状图然后查询是一个很简单的对A的选择，那么柱状图就可以被修改为对选择的反应。这一步会有些不准确，因为认为桶中的数据是均匀分布的。并且，不能去抓住相关性也容易导致错误。在上述例子中，这回反应为没有修改表中其他属性（除了A）的分布，然后会导致接下来操作符的严重错误。类似，如果出现了多个断言，然后断言间就会有独立性的假设，然后选择性就用乘法来计算。然而，一些系统只使用了能筛得最多的少悬浮来计算，然后也能识别出潜在的相关性[17]。在有涉及连接断言的柱状图时，柱状图可以被“连接”。然而这会引出对应桶分布的问题。最后，当柱状体信息拿不到，一个常数会用来估算选择性。
+&&&
 
 5.2 Cost Computation
+&&&
+5.2 耗费计算
+&&&
 The cost estimation step tries to determine the cost of an
 operation. The costing module estimates CPU, I/O and, in the
 case of parallel or distributed systems, communication costs. In
@@ -811,6 +820,9 @@ e.g., co-location of data and index pages. However, the ability to
 do accurate cost estimation and propagation of statistical
 information on data streams remains one of the difficult open
 issues in query optimization.
+&&&
+耗费估算步骤会尝试去计算操作的耗费。耗费模块估算CPU，IO和分布式系统中的交流耗费。在大部分系统中，这些参数会被结合成一个综合信息并且被用来比较候选的执行计划。问题主要是如何选择估算参数的寄来。一个早期的件数[40]发现除了统计得到的输入数据物理数据还有选择性的计算，模拟缓存使用也很重要。这对于不同级别的索引需要使用不同的缓冲池命中率同时需要通过把这些属性纳入连接方法来提纵横缓冲区的使用，例如内层索引循环中索引的局部性[17]。耗费模型吧物理设计也纳入考虑，例如数据物理上的分布还有索引页。然而，耗费的精确估算还有数据流统计信息的传递仍然是查询优化中的很难的问题。
+&&&
 
 6. ENUMERATION ARCHITECTURES
 An enumeration algorithm must pick an inexpensive execution
