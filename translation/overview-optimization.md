@@ -916,6 +916,9 @@ similar to System-R’s bottom-up enumeration scheme.
 &&&
 
 6.2 Volcano/Cascades
+&&&
+6.2 Volcano/Cascades
+&&&
 The Volcano [23] and the Cascades extensible architecture [21]
 evolved from Exodus [22]. In these systems, rules are used
 universally to represent the knowledge of search space. Two kinds
@@ -927,6 +930,7 @@ properties and costs are associated with plans. The physical
 properties and the cost depend on the algorithms used to
 implement operators and its input data streams. For efficiency,
 &&&
+Volcano[23]和Cascades的可扩展架构源于Exodus [22]。在这些系统中，规则被通用地表示搜索空间的知识。两种类型的规则会被用到。变换规则映射一个涮书表达式到另外一个。实现规则映射一个属性表达式到一个操作符树。这些规则可能会有可应用的条件。逻辑属性和物理属性和耗费都和执行计划结合在一起。梳理属性还有基于耗费的算法被用于实现操作符还有他们的输入数据流。
 &&&
 Volcano/Cascades uses dynamic programming in a top-down way
 (“memoization”). When presented with an optimization task, it
@@ -938,6 +942,7 @@ enforcer to modify properties of the data stream. At every stage, it
 uses the promise of an action to determine the next move. The
 promise parameter is programmable and reflects cost parameters.
 &&&
+为了效率Volcano/Cascades使用了动态规划来以一种自顶向下的方法（“记忆搜索”）。当给定一个优化任务，它会检查任务是否已经完成，通过查看之前已经做过优化的执行计划表来完成。另外，它会应用一个逻辑转换规则，一个实现规则或者修改数据流的属性。在每个阶段，它会使用操作的保证来决定下一个动作。保证参数是可编程的并且会反映耗费参数。
 &&&
 
 The Volcano/Cascades framework differs from Starburst in its
@@ -949,4 +954,5 @@ rules in a forward chaining fashion, as in the Starburst query
 rewrite phase, Volcano/Cascades does goal-driven application of
 rules.
 &&&
+Volcano/Cascades框架不同于Starburst是在于他的遍历方法：（a）这些系统不会使用两个完全不同的优化阶段因为所有的变换规则都是代数的和基于耗费的。（b）从代数到物理操作符的映射知道出现在一步中。（c）不同于Starburst查询重写阶段那样以一种向前链式的方法来应用规则，Volcano/Cascades使用目标驱动来应用规则。
 &&&
