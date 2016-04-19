@@ -103,6 +103,13 @@ TMary (execute TJohn to completion and then execute TMary) because: (1) the set 
 in both schedules are the same; (2) both data items A and B read by TMary are written by TJohn in
 both schedules; and (3) TMary executes the last write(A) operation and the last write(B) operation
 in both schedules.
+&&&
+如果 [Korth and Silberschatz 86]：
+1. S1和S2中事务的集合一样。
+2. 对于每个S1中的数据Q，如果事务Ti运行读(Q)然后Q会被Tj写，这个顺序同时也能在S2中被保证（例如通过读-写同步）。
+3. 对于每个S1中的数据项Q，如果事务Ti运行了最后的写，然后同样也能被S2保证（例如写-写同步）。
+例如，如果Fig2展示的调度跟串行化执行的TJohn和TMary是相等的（先运行TJohn，完成后再运行TMary）因为（1）两个事务集合是一样的；（2）TMary读的两个数据项A和B都以相同的顺序被TJohn写；并且（3）在两个调度中，TMary都对A和B运行最后的写。
+&&&
 The consistency problem in conventional database systems reduces to that of testing for
 serializable schedules because it is accepted that the consistency constraints are unknown. Each
 operation within a transaction is abstracted into either reading a data item or writing it. Achieving
@@ -116,6 +123,9 @@ would have read in a serial execution. Ww synchronization refers to serializing 
 that the last write operation of every transaction leaves the database in the same state as it would
 have left it in some serial execution. Rw and ww synchronization together result in a consistent
 schedule.
+&&&
+传统数据库系统的及执行问题就变成了看是否可以形成可串行化的调度，因为一致性的规则未知也需要被接受。在事务中的每个操作都被抽象为读写数据。在DBMS中实现可串行化可以因此解耦两个子问题：读-写同步和写-写同步，用rw同步和ww同步来分别表示[Bernstein and Goodman 81]。对应的，并发控制算法可以被分类为保证rw同步和保证ww同步，还有就是两者都保证。rw同步指把事务以就像被串行化执行的方式那样读到相同的数据来执行。ww同步指让每一个事务的最后写操作都让数据库如同串行化执行那样保持同一状态来执行。rw和ww同步一同构建一致性调度。
+&&&
 When more than one transaction is involved in reading and writing the same object at the
 same time, one of the transactions is guaranteed to complete its task while other transactions
 must be prevented from executing the conflicting operations until the continuing transaction is
@@ -126,6 +136,9 @@ is central to all the concurrency control mechanisms described in the next secti
 semantic information about transactions and their operations were available, schedules that are
 not serializable but that do maintain consistency can be produced. That is exactly what the extended
 transaction mechanisms discussed later try to achieve.
+&&&
+当一个以上的事务同时读写同一个对象，其中一个事务需要被保证完成这个任务，然后另外一个事务必须不能运行冲突的操作，知道正在运行的事务已经结束并且一个一致的状态已经能够被保证。因此，尽管一个DBMS可能不能知道业务特定的一致性要求，它还是能通过允许并发事务的可串行化执行来保证一致性。这个可一致化的概念是下一节并发控制机制的核心。如果可以知道更多的业务相关的一致性要求，不可串行化的调度也可以保证一致性。这正是后面提到的拓展的事务机制。
+&&&
 
 4 TRADITIONAL APPROACHES TO CONCURRENCY CONTROL
 In order to understand why conventional concurrency control mechanisms are too restrictive
